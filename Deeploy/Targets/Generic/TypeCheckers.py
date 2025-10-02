@@ -596,3 +596,28 @@ class SGDChecker(SignPropTypeChecker):
     def _inferSignedness(self, inputs: List[VariableBuffer],
                          operatorRepresentation: OperatorRepresentation) -> Optional[List[bool]]:
         return [True]
+
+class FloorClipChecker(SignPropTypeChecker):
+
+    def __init__(self, input_types: Sequence[Type[Pointer]], output_types: Sequence[Type[Pointer]]):
+        super().__init__(input_types, output_types)
+
+    def _inferNumLevels(self, inputs: List[VariableBuffer],
+                        operatorRepresentation: OperatorRepresentation) -> List[int]:
+        # Calculate number of levels based on min_val and max_val
+        min_val = operatorRepresentation['min_val']
+        max_val = operatorRepresentation['max_val']
+        
+        if min_val < 0:
+            # Signed range
+            n_levels = int(max_val - min_val + 1)
+        else:
+            # Unsigned range
+            n_levels = int(max_val + 1)
+            
+        return [n_levels]
+
+    def _inferSignedness(self, inputs: List[VariableBuffer],
+                         operatorRepresentation: OperatorRepresentation) -> List[bool]:
+        min_val = operatorRepresentation['min_val']
+        return [min_val < 0]  # Signed if min_val is negative

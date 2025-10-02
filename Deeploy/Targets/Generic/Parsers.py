@@ -2533,3 +2533,36 @@ class SGDParser(NodeParser):
         self.operatorRepresentation['lr'] = node.attrs['lr']
 
         return ctxt, True
+
+class FloorClipParser(NodeParser):
+
+    def __init__(self):
+        super().__init__()
+
+    def parseNode(self, node: gs.Node) -> bool:
+        ret = all([
+            'min_val' in node.attrs,
+            'max_val' in node.attrs,
+            len(node.inputs) == 1,
+            len(node.outputs) == 1
+        ])
+
+        if ret:
+            self.operatorRepresentation['min_val'] = float(node.attrs['min_val'])
+            self.operatorRepresentation['max_val'] = float(node.attrs['max_val'])
+
+        return ret
+
+    def parseNodeCtxt(self,
+                      ctxt: NetworkContext,
+                      node: gs.Node,
+                      channels_first: bool = True) -> Tuple[NetworkContext, bool]:
+
+        data_in = ctxt.lookup(node.inputs[0].name)
+        data_out = ctxt.lookup(node.outputs[0].name)
+
+        self.operatorRepresentation['data_in'] = data_in.name
+        self.operatorRepresentation['data_out'] = data_out.name
+        self.operatorRepresentation['size'] = np.prod(data_in.shape)
+
+        return ctxt, True
