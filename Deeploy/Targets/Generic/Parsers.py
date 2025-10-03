@@ -962,6 +962,55 @@ class UnsqueezeParser(NodeParser):
 
         return ctxt, True
 
+class SqueezeParser(NodeParser):
+
+    def __init__(self):
+        super().__init__()
+
+    def parseNode(self, node: gs.Node) -> (bool):
+
+        # FBRANCASI: Support both old and new ONNX opset format for squeeze operation:
+        #               - Old: axes as attribute, 1 input (data)
+        #               - New: axes as input tensor, 2 inputs (data + axes) (opset 17)
+        ret = all([len(node.inputs) >= 1, len(node.inputs) <= 2, len(node.outputs) == 1])
+
+        if ret:
+            if len(node.inputs) == 2:
+                axes_input = node.inputs[1]
+                if hasattr(axes_input, 'values'):
+                    self.operatorRepresentation['axes'] = axes_input.values.tolist()
+                else:
+                    self.operatorRepresentation['axes'] = None
+            elif 'axes' in node.attrs:
+                self.operatorRepresentation['axes'] = node.attrs['axes']
+            else:
+                self.operatorRepresentation['axes'] = None
+
+        return ret
+
+    def parseNodeCtxt(self,
+                      ctxt: NetworkContext,
+                      node: gs.Node,
+                      channels_first: bool = True) -> Tuple[NetworkContext, bool]:
+
+        inputs = ['data_in']
+        outputs = ['data_out']
+
+        for idx, inputNode in enumerate(node.inputs[:1]):
+            self.operatorRepresentation[inputs[idx]] = ctxt.lookup(inputNode.name).name
+        for idx, outputNode in enumerate(node.outputs):
+            self.operatorRepresentation[outputs[idx]] = ctxt.lookup(outputNode.name).name
+
+        if len(node.inputs) == 2:
+            axes_input = node.inputs[1]
+            axes_buffer = ctxt.lookup(axes_input.name)
+            axes_buffer._live = False
+            axes_buffer._deploy = False
+            if self.operatorRepresentation.get("axes") is None and hasattr(axes_buffer, "values"):
+                self.operatorRepresentation["axes"] = axes_buffer.values.tolist()
+
+        return ctxt, True
+
 
 class ReluParser(NodeParser):
 

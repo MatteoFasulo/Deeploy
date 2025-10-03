@@ -369,6 +369,11 @@ def _PULPDWNCHWtoNHWC_fun(graph: gs.Graph, match: Match, name: str, default_chan
             opNode.inputs[1] = weightTransposeOutput
             graph.nodes.append(weightTransposeNode)
 
+        else:
+            inputTransposeNode, inputTransposeOutput = _appendTransposeNode(inputNode, name + "_TransposeIn", inPermute)
+            opNode.inputs[0] = inputTransposeOutput
+            graph.nodes.append(inputTransposeNode)
+
         opNode.attrs["channels_first"] = default_channels_first
 
     return graph

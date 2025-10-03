@@ -58,7 +58,7 @@ BEGIN_SINGLE_CORE
         ${data_out}[i] = (${data_out_type.referencedType.typeName})(quantized + ${output_offset});
 
         if (i == 157410 || i == 157411 || i == 157412|| i == 157413) {
-            printf("DEBUG: i=%u, input_val=%.30f, scaled_val=%.30f, quantized=%d, output_offset=%d, final_output=%d", 
+            printf("DEBUG: i=%u, input_val=%.30f, scaled_val=%.30f, quantized=%d, output_offset=%d, final_output=%d\\n", 
                    i, input_val, scaled_val, quantized, ${output_offset}, (int)(quantized + ${output_offset}));
         }
     }

@@ -61,8 +61,10 @@ BasicDWConv1DBinding = NodeBinding(ConvChecker([PointerClass(int8_t), PointerCla
                                    DWConvTemplate.reference1DTemplate, BasicTransformer)
 
 BasicConv2DBindings = [
-    NodeBinding(ConvChecker([PointerClass(int8_t), PointerClass(int8_t)], [PointerClass(int32_t)]),
-                ConvTemplate.reference2DTemplate, BasicTransformer)
+    NodeBinding(
+        ConvChecker([PointerClass(int8_t), PointerClass(int8_t),
+                     PointerClass(int32_t)], [PointerClass(int32_t)]), ConvTemplate.reference2DTemplate,
+        BasicTransformer)
 ] + [
     NodeBinding(
         ConvChecker([PointerClass(float32_t), PointerClass(float32_t),

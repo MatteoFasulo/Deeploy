@@ -23,7 +23,8 @@ from Deeploy.Targets.Generic.Parsers import AddParser, ConcatParser, DebugParser
     GenericDWConv1DParser, GenericDWConv2DParser, GenericGEMMParser, GenericMaxPool2DParser, IntegerDivParser, \
     ITAMaxParser, ITAPartialMaxParser, LayerNormParser, MatMulParser, MulParser, Pad1DParser, Pad2DParser, \
     QuantParser, ReduceMeanParser, ReduceSumParser, ReluParser, RequantShiftParser, ReshapeParser, RQIntegerDivParser, \
-    RQSiGELUParser, SliceParser, SoftmaxParser, TransposeParser, UnsqueezeParser, iLayerNormParser, iSoftmaxParser
+    RQSiGELUParser, SliceParser, SoftmaxParser, SqueezeParser, TransposeParser, UnsqueezeParser, iLayerNormParser, \
+    iSoftmaxParser
 from Deeploy.Targets.Generic.Templates import AllocateTemplate, FreeTemplate
 from Deeploy.Targets.Generic.TopologyOptimizationPasses.Passes import DequantPatternPass, ExtractPaddingFromConvPass, \
     ExtractPaddingFromPoolPass, FloorClipPatternPass, MatMulAddMergePass, MergeConstAddAndRequantPass, \
@@ -61,6 +62,7 @@ RQIntegerDivMapper = NodeMapper(RQIntegerDivParser(), [BasicRQIntegerDivBinding]
 SoftmaxMapper = NodeMapper(SoftmaxParser(), BasicSoftmaxBindings)
 iSoftmaxMapper = NodeMapper(iSoftmaxParser(), BasicSoftmaxBindings)
 TransposeMapper = NodeMapper(TransposeParser(), BasicTransposeBindings)
+SqueezeMapper = NodeMapper(SqueezeParser(), BasicReshapeBindings)
 UnsqueezeMapper = NodeMapper(UnsqueezeParser(), BasicReshapeBindings)
 QuantMapper = NodeMapper(QuantParser(), BasicQuantBindings)
 DequantMapper = NodeMapper(DequantParser(), BasicDequantBindings)
@@ -106,7 +108,7 @@ GenericMapping = {
     'RequantShift': RequantShiftLayer([RequantShiftMapper]),
     'Reshape': ReshapeLayer([ReshapeMapper]),
     'RQIntegerDiv': RQIntegerDivLayer([RQIntegerDivMapper]),
-    'Squeeze': ReshapeLayer([UnsqueezeMapper]),
+    'Squeeze': ReshapeLayer([SqueezeMapper]),
     'Transpose': TransposeLayer([TransposeMapper]),
     'Unsqueeze': ReshapeLayer([UnsqueezeMapper]),
     'Slice': SliceLayer([SliceMapper]),
