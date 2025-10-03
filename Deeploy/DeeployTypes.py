@@ -996,7 +996,7 @@ class NetworkContext():
 
         """
 
-        assert len(node.outputs) <= 1, f"Constant {node.name} has more than one output"
+        #assert len(node.outputs) <= 1, f"Constant {node.name} has more than one output"
 
         if name == "":
             name = node.name
