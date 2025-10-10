@@ -18,6 +18,13 @@ class _Conv2D_Template(NodeTemplate):
         data_in = ctxt.lookup(operatorRepresentation['data_in'])
         data_out = ctxt.lookup(operatorRepresentation['data_out'])
 
+        # Check if bias is available
+        if 'bias' in operatorRepresentation:
+            operatorRepresentation['has_bias'] = True
+        else:
+            operatorRepresentation['has_bias'] = False
+            operatorRepresentation['bias'] = 'NULL'
+
         operatorRepresentation['input_offset'] = 0
         if hasattr(data_in, "_signed") and hasattr(data_in, "nLevels"):
             operatorRepresentation['input_offset'] = (data_in._signed == 0) * int(data_in.nLevels // 2)
@@ -67,7 +74,7 @@ BEGIN_SINGLE_CORE
         Conv2d_s${data_in_type.referencedType.typeWidth}_s${weight_type.referencedType.typeWidth}_s${data_out_type.referencedType.typeWidth}_NCHW(
             ref_${data_out}_${data_in}, ${ch_im_in}, ${dim_im_in_x}, ${dim_im_in_y},
             ${weight}, ${ch_im_out}, ${dim_kernel_x}, ${dim_kernel_y},
-            ${stride_x}, ${stride_y},
+            ${stride_x}, ${stride_y}, ${bias},
             ref_${data_out}_${data_out}, ${input_offset}, ${output_offset}
         );
         ref_${data_out}_${data_in} += ${batchOffsetIn};
