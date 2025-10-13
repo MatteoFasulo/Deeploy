@@ -247,7 +247,7 @@ def _NCHWtoNHWC_fun(graph: gs.Graph, match: Match, name: str, default_channels_f
         if node_op in ["RequantizedConv", "Conv"]:
 
             # Non DW-Type:
-            if opNode.attrs['group'] == 1:
+            if 'group' in opNode.attrs and opNode.attrs['group'] == 1:
                 weightNode = opNode.inputs[1]
                 weightTransposeNode, weightTransposeOutput = _appendTransposeNode(weightNode, name + "TransposeWeight",
                                                                                   inPermute)
@@ -341,7 +341,7 @@ def _PULPDWNCHWtoNHWC_fun(graph: gs.Graph, match: Match, name: str, default_chan
     opNode = matched_nodes[0]
     node_op = opNode.op
 
-    if opNode.attrs['group'] == 1:
+    if 'group' in opNode.attrs and opNode.attrs['group'] == 1:
         return graph
 
     if (("channels_first" in opNode.attrs and opNode.attrs["channels_first"] != default_channels_first)
@@ -362,13 +362,11 @@ def _PULPDWNCHWtoNHWC_fun(graph: gs.Graph, match: Match, name: str, default_chan
         graph.nodes.append(outputTransposeNode)
 
         if node_op == "RequantizedConv":
-
             weightNode = opNode.inputs[1]
             weightTransposeNode, weightTransposeOutput = _appendTransposeNode(weightNode, name + "TransposeWeight",
                                                                               inPermute)
             opNode.inputs[1] = weightTransposeOutput
             graph.nodes.append(weightTransposeNode)
-
         else:
             inputTransposeNode, inputTransposeOutput = _appendTransposeNode(inputNode, name + "_TransposeIn", inPermute)
             opNode.inputs[0] = inputTransposeOutput
@@ -379,18 +377,52 @@ def _PULPDWNCHWtoNHWC_fun(graph: gs.Graph, match: Match, name: str, default_chan
     return graph
 
 
+# Requantized DW Conv
 @contextagnostic
 class PULPDWConvPass(ReplaceSequentialPatternPass):
 
     def __init__(self, default_channels_first: bool = True):
+        # Define pattern graph
         graph = gs.Graph()
+
         _input = gs.Variable(name = 'input_1')
         output = graph.layer(inputs = [_input], outputs = ['convOut'], op = 'RequantizedConv', name = 'requantizedConv')
+
         graph.outputs.append(output)
         graph.inputs.append(_input)
 
-        name = "_NCHW_TO_NHWC_CONV_PASS"
-        super().__init__(graph, partial(_PULPDWNCHWtoNHWC_fun, default_channels_first = default_channels_first), name)
+        # Define name
+        name = "_NCHW_TO_NHWC_DW_CONV_PASS"
+
+        # Initialize Pass
+        super().__init__(pattern = graph,
+                         replacement_fn = partial(_PULPDWNCHWtoNHWC_fun,
+                                                  default_channels_first = default_channels_first),
+                         name = name)
+
+
+# Float DW Conv
+@contextagnostic
+class PULPFPDWConvPass(ReplaceSequentialPatternPass):
+
+    def __init__(self, default_channels_first: bool = True):
+        # Define pattern graph
+        graph = gs.Graph()
+
+        _input = gs.Variable(name = 'input_1')
+        output = graph.layer(inputs = [_input], outputs = ['convOut'], op = 'Conv', name = 'conv')
+
+        graph.outputs.append(output)
+        graph.inputs.append(_input)
+
+        # Define name
+        name = "_NCHW_TO_NHWC_FP_DW_CONV_PASS"
+
+        # Initialize Pass
+        super().__init__(pattern = graph,
+                         replacement_fn = partial(_PULPDWNCHWtoNHWC_fun,
+                                                  default_channels_first = default_channels_first),
+                         name = name)
 
 
 def _PULPDenseNCHWtoNHWC_fun(graph: gs.Graph, match: Match, name: str, default_channels_first: bool = True):
@@ -470,6 +502,7 @@ class PULPNCHWtoNHWCPass(SequentialPass):
             NCHWtoNHWCPadPass(default_channels_first),
             NCHWtoNHWCMaxPoolPass(default_channels_first),
             PULPDWConvPass(default_channels_first),
+            PULPFPDWConvPass(default_channels_first),
             PULPNCHWtoNHWCDenseConvPass(default_channels_first),
             PULPNCHWtoNHWCDenseRequantizedConvPass(default_channels_first),
         ]
