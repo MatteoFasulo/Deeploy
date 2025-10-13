@@ -271,8 +271,9 @@ BasicDequantBindings = [
 ]
 
 BasicFloorClipBindings = [
-    NodeBinding(FloorClipChecker([PointerClass(type)], [PointerClass(int8_t)]), FloorClipTemplate.referenceTemplate, BasicTransformer) 
-    for type in IntegerDataTypes
+    NodeBinding(FloorClipChecker([PointerClass(type)], [PointerClass(int8_t)]), FloorClipTemplate.referenceTemplate,
+                BasicTransformer) for type in IntegerDataTypes
 ] + [
-    NodeBinding(FloorClipChecker([PointerClass(float32_t)], [PointerClass(int8_t)]), FloorClipTemplate.referenceTemplate, BasicTransformer)
+    NodeBinding(FloorClipChecker([PointerClass(float32_t)], [PointerClass(int8_t)]),
+                FloorClipTemplate.referenceTemplate, BasicTransformer)
 ]

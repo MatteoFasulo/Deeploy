@@ -47,6 +47,7 @@ for (uint32_t n=0; n<${batch}; ++n) {
         ${weight}, ${ch_im_out},
         ${dim_kernel_y}, ${dim_kernel_x},
         ${stride_y}, ${stride_x},
+        ${bias}, ${has_bias},
         ref_${data_out}_${data_out},
         ${padding_y_top}, ${padding_y_bottom}, ${padding_x_left}, ${padding_x_right}
     );
@@ -66,15 +67,16 @@ ${data_out_type.typeName} ref_${data_out}_${data_out} = ${data_out};
 for (uint32_t n=0; n<${batch}; ++n) {
     PULP_Conv2d_Im2Col_fp${data_in_type.referencedType.typeWidth}_fp${weight_type.referencedType.typeWidth}_fp${data_out_type.referencedType.typeWidth}_HWC(
         ref_${data_out}_${data_in},
-        ${dim_im_in_y},
         ${dim_im_in_x},
+        ${dim_im_in_y},
         ${ch_im_in},
         ${weight},
         ${ch_im_out},
-        ${dim_kernel_y},
         ${dim_kernel_x},
-        ${stride_y},
+        ${dim_kernel_y},
         ${stride_x},
+        ${stride_y},
+        ${bias}, ${has_bias},
         ref_${data_out}_${data_out},
         ${padding_y_top},
         ${padding_y_bottom},

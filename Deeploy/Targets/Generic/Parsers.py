@@ -962,6 +962,7 @@ class UnsqueezeParser(NodeParser):
 
         return ctxt, True
 
+
 class SqueezeParser(NodeParser):
 
     def __init__(self):
@@ -2583,18 +2584,14 @@ class SGDParser(NodeParser):
 
         return ctxt, True
 
+
 class FloorClipParser(NodeParser):
 
     def __init__(self):
         super().__init__()
 
     def parseNode(self, node: gs.Node) -> bool:
-        ret = all([
-            'min_val' in node.attrs,
-            'max_val' in node.attrs,
-            len(node.inputs) == 1,
-            len(node.outputs) == 1
-        ])
+        ret = all(['min_val' in node.attrs, 'max_val' in node.attrs, len(node.inputs) == 1, len(node.outputs) == 1])
 
         if ret:
             self.operatorRepresentation['min_val'] = float(node.attrs['min_val'])

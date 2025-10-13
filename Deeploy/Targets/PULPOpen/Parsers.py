@@ -170,6 +170,50 @@ class PULPDWConv1DParser(RQSConv1DParser):
         return ctxt, False
 
 
+class PULPFPConv2DWithBiasParser(Conv2DParser):
+
+    def __init__(self, noBiasHoisting = True):
+        super().__init__(noBiasHoisting)
+
+    def parseNode(self, node: gs.Node) -> (bool):
+
+        wellFormed = super().parseNode(node)
+        if wellFormed:
+            ret = all([
+                self.operatorRepresentation['group'] == 1,
+                self.operatorRepresentation['pads'][0] == self.operatorRepresentation['pads'][2],
+                self.operatorRepresentation['pads'][1] == self.operatorRepresentation['pads'][3],
+                self.operatorRepresentation['pads'][0] == self.operatorRepresentation['pads'][1],
+                len(node.inputs) == 3  # FBRANCASI: Accept Conv with bias (3 inputs)
+            ])
+
+            self.operatorRepresentation['dim_kernel_x'] = int(self.operatorRepresentation['kernel_shape'][0])
+            self.operatorRepresentation['dim_kernel_y'] = int(self.operatorRepresentation['kernel_shape'][1])
+            self.operatorRepresentation['dilation_x'] = int(self.operatorRepresentation['dilations'][0])
+            self.operatorRepresentation['dilation_y'] = int(self.operatorRepresentation['dilations'][1])
+            self.operatorRepresentation['padding_y_top'] = int(self.operatorRepresentation['pads'][0])
+            self.operatorRepresentation['padding_x_left'] = int(self.operatorRepresentation['pads'][1])
+            self.operatorRepresentation['padding_y_bottom'] = int(self.operatorRepresentation['pads'][2])
+            self.operatorRepresentation['padding_x_right'] = int(self.operatorRepresentation['pads'][3])
+            self.operatorRepresentation['stride_x'] = int(self.operatorRepresentation['strides'][0])
+            self.operatorRepresentation['stride_y'] = int(self.operatorRepresentation['strides'][1])
+
+            return ret
+        return False
+
+    def parseNodeCtxt(self,
+                      ctxt: NetworkContext,
+                      node: gs.Node,
+                      channels_first: bool = True) -> Tuple[NetworkContext, bool]:
+
+        newCtxt, ret = super().parseNodeCtxt(ctxt, node, channels_first)
+
+        if ret:
+            return newCtxt, True
+
+        return ctxt, False
+
+
 class PULPDWConv2DParser(RQSConv2DParser):
 
     def __init__(self, noBiasHoisting = True):
