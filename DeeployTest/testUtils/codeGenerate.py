@@ -230,7 +230,29 @@ def generateL3HexDump(deployer: NetworkDeployer, path: str, test_inputs: List, t
 
         elif "output" in buf.name:
             _list = buf.name.split("_")
-            idx = int(_list[1])
+
+            # FBRANCASI: Find the first numeric part after "output"
+            idx = None
+            for i, part in enumerate(_list):
+                if part == "output" and i + 1 < len(_list):
+                    try:
+                        idx = int(_list[i + 1])
+                        break
+                    except ValueError:
+                        continue
+
+            if idx is None:
+                # FBRANCASI: Try to find any numeric part
+                for part in _list:
+                    try:
+                        idx = int(part)
+                        break
+                    except ValueError:
+                        continue
+
+            if idx is None:
+                raise Exception(f"Cannot extract output index from buffer name: {buf.name}")
+
             array = _shapeBroadcast(deployer.ctxt, test_outputs[idx], f"output_{idx}")
 
         elif isinstance(buf, ConstantBuffer):

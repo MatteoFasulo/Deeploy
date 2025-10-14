@@ -41,7 +41,7 @@ if weight_signed:
 else:
     signatureString += '_u8'
 %>
-// PULP NN GEMM
+// PULP NN GEMM - Keep original for now
 int8_t* ref_${data_out}_${A} = ${A};
 int8_t* ref_${data_out}_${B} = ${B};
 int8_t* ref_${data_out}_${data_out} = ${data_out};
@@ -93,26 +93,28 @@ class _MatMulTemplate(NodeTemplate):
 
 
 PULPMM_8_Template = _MatMulTemplate("""
-// MatMul (Name: ${nodeName}, Op: ${nodeOp})
-BEGIN_SINGLE_CORE
-    ${A_type.typeName} ref_${data_out}_${A} = ${A};
-    ${B_type.typeName} ref_${data_out}_${B} = ${B};
-    ${data_out_type.typeName} ref_${data_out}_${data_out} = ${data_out};
+// Direct MatMul call (Name: ${nodeName}, Op: ${nodeOp})
+${A_type.typeName} ref_${data_out}_${A} = ${A};
+${B_type.typeName} ref_${data_out}_${B} = ${B};
+${data_out_type.typeName} ref_${data_out}_${data_out} = ${data_out};
 
-    for(uint32_t i=0;i<${batch};i++){
-        MatMul_s${A_type.referencedType.typeWidth}_s${B_type.referencedType.typeWidth}_s${data_out_type.referencedType.typeWidth}(
-            ref_${data_out}_${A},
-            ref_${data_out}_${B},
-            ref_${data_out}_${data_out},
-            ${M},
-            ${N},
-            ${O},
-            0, 0, ${C_offset}
-        );
+for(uint32_t i=0;i<${batch};i++){
+    pi_cl_team_fork(NUM_CORES, PULP_MatMul_s${A_type.referencedType.typeWidth}_s${B_type.referencedType.typeWidth}_s${data_out_type.referencedType.typeWidth}_unroll1x7, &(struct {
+        const ${A_type.referencedType.typeName} *pSrcA;
+        const ${B_type.referencedType.typeName} *pSrcB;
+        ${data_out_type.referencedType.typeName} *pDstY;
+        uint32_t M, N, O;
+    }){
+        .pSrcA = ref_${data_out}_${A},
+        .pSrcB = ref_${data_out}_${B},
+        .pDstY = ref_${data_out}_${data_out},
+        .M = ${M},
+        .N = ${N},
+        .O = ${O}
+    });
 
-        ref_${data_out}_${A} += ${M} * ${N};
-        ref_${data_out}_${B} += ${N} * ${O};
-        ref_${data_out}_${data_out} += ${M} * ${O};
-    }
-END_SINGLE_CORE
+    ref_${data_out}_${A} += ${M} * ${N};
+    ref_${data_out}_${B} += ${N} * ${O};
+    ref_${data_out}_${data_out} += ${M} * ${O};
+}
 """)

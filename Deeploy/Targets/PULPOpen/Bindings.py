@@ -236,13 +236,6 @@ PULPFloatConv2DBindings = [
         ForkTransformer)
 ]
 
-PULPQuantizedConv2DBindings = [
-    NodeBinding(
-        ConvChecker([PointerClass(int8_t), PointerClass(int8_t),
-                     PointerClass(int32_t)], [PointerClass(int32_t)]), IntConvTemplate.reference2DTemplate,
-        ForkTransformer)
-]
-
 PULPRQSMatrixVecBindings = [
     NodeBinding(
         PULPLinearChecker([PointerClass(type1),
@@ -422,6 +415,19 @@ PULPGatherBindings = [
                 GatherTemplate.referenceTemplate, ForkTransformer) for type in IntegerDataTypes
 ]
 
+PULPQuantBindings = [
+    NodeBinding(QuantChecker([PointerClass(float32_t)], [PointerClass(int8_t)]), QuantTemplate.referenceTemplate,
+                ForkTransformer),
+]
+
+PULPDequantBindings = [
+    NodeBinding(DequantChecker([PointerClass(int8_t)], [PointerClass(float32_t)]), DequantTemplate.referenceTemplate,
+                ForkTransformer),
+] + [
+    NodeBinding(DequantChecker([PointerClass(int32_t)], [PointerClass(float32_t)]), DequantTemplate.referenceTemplate,
+                ForkTransformer),
+]
+
 BasicQuantBindings = [
     NodeBinding(QuantChecker([PointerClass(float32_t)], [PointerClass(int8_t)]), QuantTemplate.referenceTemplate,
                 ForkTransformer),
@@ -439,4 +445,11 @@ PULPQuantizedGEMMBindings = [
     NodeBinding(
         GEMMChecker([PointerClass(int8_t), PointerClass(int8_t),
                      PointerClass(int32_t)], [PointerClass(int32_t)]), GemmTemplate.referenceTemplate, ForkTransformer)
+]
+
+PULPQuantizedConv2DBindings = [
+    NodeBinding(
+        ConvChecker([PointerClass(int8_t), PointerClass(int8_t),
+                     PointerClass(int32_t)], [PointerClass(int32_t)]), IntConvTemplate.reference2DTemplate,
+        ForkTransformer)
 ]
