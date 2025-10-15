@@ -6,23 +6,25 @@ from Deeploy.CommonExtensions.OptimizationPasses.TopologyOptimizationPasses.Lowe
     RemoveEmptyConvBiasPass
 from Deeploy.DeeployTypes import ConstantBuffer, DeploymentEngine, DeploymentPlatform, NodeMapper, NodeTemplate, \
     StructBuffer, TopologyOptimizer, TransientBuffer, VariableBuffer
-from Deeploy.Targets.Generic.Bindings import BasicAddBindings, BasicConcatBindings, BasicConv1DBinding, \
-    BasicConv2DBindings, BasicDebugPrintBindings, BasicDequantBindings, BasicDivBindings, BasicDWConv1DBinding, \
-    BasicDWConv2DBindings, BasicGatherBindings, BasicGELUBindings, BasicGEMMBindings, BasicITAPartialSoftmaxBinding, \
-    BasicITASoftmaxBinding, BasicLayerNormBindings, BasicMatMulBindings, BasicMaxPool2DBindings, BasicMulBindings, \
-    BasicPad1DBindings, BasicPad2DBindings, BasicQuantBindings, BasicReduceMeanBindings, BasicReduceSumBindings, \
-    BasicReluBinding, BasicReshapeBindings, BasicRQIntegerDivBinding, BasicRQSBindings, BasicRQSGELUBinding, \
-    BasicSliceBindings, BasicSoftmaxBindings, BasicTransposeBindings, DummyBinding
-from Deeploy.Targets.Generic.Layers import AddLayer, ConcatLayer, ConvLayer, DebugPrintLayer, DequantLayer, DivLayer, \
-    GatherLayer, GELULayer, GEMMLayer, ITAMaxLayer, LayerNormLayer, MatMulLayer, MaxPoolLayer, MulLayer, PadLayer, \
-    QuantLayer, ReduceMeanLayer, ReduceSumLayer, ReluLayer, RequantShiftLayer, ReshapeLayer, RQIntegerDivLayer, \
-    RQSiGELULayer, SliceLayer, SoftmaxLayer, TransposeLayer
-from Deeploy.Targets.Generic.Parsers import AddParser, ConcatParser, DebugParser, DequantParser, DivParser, \
-    DummyParser, FlattenParser, GatherParser, GELUParser, GenericConv1DParser, GenericConv2DParser, \
-    GenericDWConv1DParser, GenericDWConv2DParser, GenericGEMMParser, GenericMaxPool2DParser, IntegerDivParser, \
-    ITAMaxParser, ITAPartialMaxParser, LayerNormParser, MatMulParser, MulParser, Pad1DParser, Pad2DParser, \
-    QuantParser, ReduceMeanParser, ReduceSumParser, ReluParser, RequantShiftParser, ReshapeParser, RQIntegerDivParser, \
-    RQSiGELUParser, SliceParser, SoftmaxParser, TransposeParser, UnsqueezeParser, iLayerNormParser, iSoftmaxParser
+from Deeploy.Targets.Generic.Bindings import BasicAddBindings, BasicClipBindings, BasicConcatBindings, \
+    BasicConv1DBinding, BasicConv2DBindings, BasicDebugPrintBindings, BasicDequantBindings, BasicDivBindings, \
+    BasicDWConv1DBinding, BasicDWConv2DBindings, BasicFloorBindings, BasicGatherBindings, BasicGELUBindings, \
+    BasicGEMMBindings, BasicITAPartialSoftmaxBinding, BasicITASoftmaxBinding, BasicLayerNormBindings, \
+    BasicMatMulBindings, BasicMaxPool2DBindings, BasicMulBindings, BasicPad1DBindings, BasicPad2DBindings, \
+    BasicQuantBindings, BasicReduceMeanBindings, BasicReduceSumBindings, BasicReluBinding, BasicReshapeBindings, \
+    BasicRQIntegerDivBinding, BasicRQSBindings, BasicRQSGELUBinding, BasicSliceBindings, BasicSoftmaxBindings, \
+    BasicTransposeBindings, DummyBinding
+from Deeploy.Targets.Generic.Layers import AddLayer, ClipLayer, ConcatLayer, ConvLayer, DebugPrintLayer, DequantLayer, \
+    DivLayer, FloorLayer, GatherLayer, GELULayer, GEMMLayer, ITAMaxLayer, LayerNormLayer, MatMulLayer, MaxPoolLayer, \
+    MulLayer, PadLayer, QuantLayer, ReduceMeanLayer, ReduceSumLayer, ReluLayer, RequantShiftLayer, ReshapeLayer, \
+    RQIntegerDivLayer, RQSiGELULayer, SliceLayer, SoftmaxLayer, TransposeLayer
+from Deeploy.Targets.Generic.Parsers import AddParser, ClipParser, ConcatParser, DebugParser, DequantParser, \
+    DivParser, DummyParser, FlattenParser, FloorParser, GatherParser, GELUParser, GenericConv1DParser, \
+    GenericConv2DParser, GenericDWConv1DParser, GenericDWConv2DParser, GenericGEMMParser, GenericMaxPool2DParser, \
+    IntegerDivParser, ITAMaxParser, ITAPartialMaxParser, LayerNormParser, MatMulParser, MulParser, Pad1DParser, \
+    Pad2DParser, QuantParser, ReduceMeanParser, ReduceSumParser, ReluParser, RequantShiftParser, ReshapeParser, \
+    RQIntegerDivParser, RQSiGELUParser, SliceParser, SoftmaxParser, TransposeParser, UnsqueezeParser, \
+    iLayerNormParser, iSoftmaxParser
 from Deeploy.Targets.Generic.Templates import AllocateTemplate, FreeTemplate
 from Deeploy.Targets.Generic.TopologyOptimizationPasses.Passes import DequantPatternPass, ExtractPaddingFromConvPass, \
     ExtractPaddingFromPoolPass, MatMulAddMergePass, MergeConstAddAndRequantPass, QuantPatternPass, \
@@ -63,6 +65,8 @@ TransposeMapper = NodeMapper(TransposeParser(), BasicTransposeBindings)
 UnsqueezeMapper = NodeMapper(UnsqueezeParser(), BasicReshapeBindings)
 QuantMapper = NodeMapper(QuantParser(), BasicQuantBindings)
 DequantMapper = NodeMapper(DequantParser(), BasicDequantBindings)
+FloorMapper = NodeMapper(FloorParser(), BasicFloorBindings)
+ClipMapper = NodeMapper(ClipParser(), BasicClipBindings)
 
 SliceMapper = NodeMapper(SliceParser(), BasicSliceBindings)
 
@@ -72,11 +76,13 @@ DummyMapper = NodeMapper(DummyParser(), [DummyBinding])
 
 GenericMapping = {
     'Add': AddLayer([AddMapper]),
+    'Clip': ClipLayer([ClipMapper]),
     'Conv': ConvLayer([Conv2DMapper, DWConv2DMapper, Conv1DMapper, DWConv1DMapper]),
     'Concat': ConcatLayer([ConcatMapper]),
     'DebugPrint': DebugPrintLayer([DebugMapper]),
     'Div': DivLayer([DivMapper]),
     'Flatten': ReshapeLayer([FlattenMapper]),
+    'Floor': FloorLayer([FloorMapper]),
     'Gather': GatherLayer([GatherMapper]),
     'Gemm': GEMMLayer([GEMMMapper]),
     'iGELU': GELULayer([GELUMapper]),

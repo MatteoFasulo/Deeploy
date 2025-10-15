@@ -11,19 +11,20 @@ from Deeploy.CommonExtensions.DataTypes import FloatDataTypes, IntegerDataTypes,
     int8_t, int32_t, uint8_t
 from Deeploy.DeeployTypes import CodeTransformation, NodeBinding
 from Deeploy.FutureExtension.CodeTransformationPasses.FutureCodeTransformation import FutureGeneration
-from Deeploy.Targets.Generic.Templates import AddTemplate, ConcatTemplate, ConvTemplate, DebugPrintTemplate, \
-    DequantTemplate, DummyTemplate, DWConvTemplate, FloatAddTemplate, FloatConvTemplate, FloatDivTemplate, \
-    FloatDWConvTemplate, FloatGELUTemplate, FloatGemmTemplate, FloatLayernormTemplate, FloatMatMulTemplate, \
-    FloatMaxPoolTemplate, FloatMulTemplate, FloatPadTemplate, FloatReduceMeanTemplate, FloatReluTemplate, \
-    FloatSoftmaxTemplate, GatherTemplate, GemmTemplate, IntegerDivTemplate, ITAMaxTemplate, ITAPartialMaxTemplate, \
-    MatMulTemplate, MaxPoolTemplate, MulTemplate, PadTemplate, QuantTemplate, ReduceMeanTemplate, ReduceSumTemplate, \
-    RequantShiftTemplate, ReshapeTemplate, RQIntegerDivTemplate, RQSiGELUTemplate, SliceTemplate, TransposeTemplate, \
-    iGELUTemplate, iLayernormTemplate, iRMSNormTemplate, iSoftmaxTemplate
-from Deeploy.Targets.Generic.TypeCheckers import AddChecker, ConcatChecker, ConvChecker, DebugPrintChecker, \
-    DequantChecker, DivChecker, DummyChecker, GatherChecker, GELUChecker, GEMMChecker, LayerNormChecker, \
-    MatMulChecker, MaxPoolChecker, MulChecker, PadChecker, QuantChecker, ReduceMeanChecker, ReduceSumChecker, \
-    ReluChecker, RequantShiftChecker, ReshapeChecker, RQIntegerDivChecker, SliceChecker, SoftmaxChecker, \
-    TransposeChecker
+from Deeploy.Targets.Generic.Templates import AddTemplate, ClipTemplate, ConcatTemplate, ConvTemplate, \
+    DebugPrintTemplate, DequantTemplate, DummyTemplate, DWConvTemplate, FloatAddTemplate, FloatConvTemplate, \
+    FloatDivTemplate, FloatDWConvTemplate, FloatGELUTemplate, FloatGemmTemplate, FloatLayernormTemplate, \
+    FloatMatMulTemplate, FloatMaxPoolTemplate, FloatMulTemplate, FloatPadTemplate, FloatReduceMeanTemplate, \
+    FloatReluTemplate, FloatSoftmaxTemplate, FloorClipTemplate, FloorTemplate, GatherTemplate, GemmTemplate, \
+    IntegerDivTemplate, ITAMaxTemplate, ITAPartialMaxTemplate, MatMulTemplate, MaxPoolTemplate, MulTemplate, \
+    PadTemplate, QuantTemplate, ReduceMeanTemplate, ReduceSumTemplate, RequantShiftTemplate, ReshapeTemplate, \
+    RQIntegerDivTemplate, RQSiGELUTemplate, SliceTemplate, TransposeTemplate, iGELUTemplate, iLayernormTemplate, \
+    iRMSNormTemplate, iSoftmaxTemplate
+from Deeploy.Targets.Generic.TypeCheckers import AddChecker, ClipChecker, ConcatChecker, ConvChecker, \
+    DebugPrintChecker, DequantChecker, DivChecker, DummyChecker, FloorChecker, FloorClipChecker, GatherChecker, \
+    GELUChecker, GEMMChecker, LayerNormChecker, MatMulChecker, MaxPoolChecker, MulChecker, PadChecker, QuantChecker, \
+    ReduceMeanChecker, ReduceSumChecker, ReluChecker, RequantShiftChecker, ReshapeChecker, RQIntegerDivChecker, \
+    SliceChecker, SoftmaxChecker, TransposeChecker
 
 BasicTransformer = CodeTransformation([ArgumentStructGeneration(), MemoryManagementGeneration(), FutureGeneration()])
 
@@ -265,4 +266,22 @@ BasicDequantBindings = [
 ] + [
     NodeBinding(DequantChecker([PointerClass(int32_t)], [PointerClass(float32_t)]), DequantTemplate.referenceTemplate,
                 BasicTransformer),
+]
+
+BasicFloorClipBindings = [
+    NodeBinding(FloorClipChecker([PointerClass(type)], [PointerClass(int8_t)]), FloorClipTemplate.referenceTemplate,
+                BasicTransformer) for type in IntegerDataTypes
+] + [
+    NodeBinding(FloorClipChecker([PointerClass(float32_t)], [PointerClass(int8_t)]),
+                FloorClipTemplate.referenceTemplate, BasicTransformer)
+]
+
+BasicFloorBindings = [
+    NodeBinding(FloorChecker([PointerClass(type)], [PointerClass(type)]), FloorTemplate.referenceTemplate,
+                BasicTransformer) for type in (*IntegerDataTypes, *FloatDataTypes)
+]
+
+BasicClipBindings = [
+    NodeBinding(ClipChecker([PointerClass(type)], [PointerClass(type)]), ClipTemplate.referenceTemplate,
+                BasicTransformer) for type in (*IntegerDataTypes, *FloatDataTypes)
 ]
