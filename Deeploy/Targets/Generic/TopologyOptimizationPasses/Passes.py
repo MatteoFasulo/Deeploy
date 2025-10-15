@@ -1026,16 +1026,17 @@ class GEMMRequantMergePass(ReplaceSequentialPatternPass):
         super().__init__(graph, merge_gemm_rq_fun, name)
 
 
-def _quant_pattern_fun(graph: gs.Graph, match: Match, name: str):
+def _quant_pattern_floor_fun(graph: gs.Graph, match: Match, name: str):
     # Get all nodes in the match
     matched_nodes = [m for k, m in match.nodes_map.items()]
 
-    # The pattern should be: Div -> Add -> Round -> Clip
+    # The pattern should be: Div -> Add -> Add -> Floor -> Clip
     # Extract each operation from the matched nodes
-    div_node = matched_nodes[0]  # Div operation for scaling
-    add_node = matched_nodes[1]  # Add operation for zero_point
-    round_node = matched_nodes[2]  # Round operation
-    clip_node = matched_nodes[3]  # Clip operation for clamping
+    div_node = matched_nodes[0]
+    add_node1 = matched_nodes[1]
+    add_node2 = matched_nodes[2]
+    floor_node = matched_nodes[3]
+    clip_node = matched_nodes[4]
 
     # Get input and output tensors
     input_tensor = div_node.inputs[0]
@@ -1046,8 +1047,14 @@ def _quant_pattern_fun(graph: gs.Graph, match: Match, name: str):
     scale_value = 1.0 / float(scale_input.values.item()) if hasattr(scale_input, 'values') else 1.0
 
     # Extract zero_point (from the second input of Add node)
-    zero_point_input = add_node.inputs[1]
+    zero_point_input = add_node1.inputs[1]
     zero_point_value = float(zero_point_input.values.item()) if hasattr(zero_point_input, 'values') else 0.0
+
+    rounding_input = add_node2.inputs[1] if add_node2.inputs[0] == add_node1.outputs[0] else add_node2.inputs[0]
+    if hasattr(rounding_input, 'values'):
+        rounding_value = float(rounding_input.values.item())
+        if abs(rounding_value - 0.5) > 1e-6:
+            return graph
 
     # Extract min and max values from Clip node inputs (not attributes)
     # In ONNX opset 13, Clip takes min and max as inputs rather than attributes
@@ -1061,10 +1068,12 @@ def _quant_pattern_fun(graph: gs.Graph, match: Match, name: str):
     if min_value is not None and max_value is not None:
         if min_value < 0:
             signed = True
-            bit_width = int(np.log2(max_value - min_value + 1))
+            rng = (max_value - min_value + 1)
+            bit_width = int(np.log2(rng))
         else:
             signed = False
-            bit_width = int(np.log2(max_value + 1))
+            rng = max_value + 1
+            bit_width = int(np.log2(rng))
     else:
         # Default values if min or max is None
         # You might want to extract these from the model parameters instead
@@ -1116,15 +1125,16 @@ class QuantPatternPass(ReplaceSequentialPatternPass):
 
         # Create the pattern
         div_out = graph.layer(inputs = [input_var], outputs = ['div_out'], op = 'Div', name = 'div')
-        add_out = graph.layer(inputs = div_out, outputs = ['add_out'], op = 'Add', name = 'add')
-        round_out = graph.layer(inputs = add_out, outputs = ['round_out'], op = 'Round', name = 'round')
-        clip_out = graph.layer(inputs = round_out, outputs = ['clip_out'], op = 'Clip', name = 'clip')
+        add1_out = graph.layer(inputs = div_out, outputs = ['add1_out'], op = 'Add', name = 'add1')
+        add2_out = graph.layer(inputs = add1_out, outputs = ['add2_out'], op = 'Add', name = 'add2')
+        floor_out = graph.layer(inputs = add2_out, outputs = ['floor_out'], op = 'Floor', name = 'floor')
+        clip_out = graph.layer(inputs = floor_out, outputs = ['clip_out'], op = 'Clip', name = 'clip')
 
         graph.outputs.append(clip_out)
         graph.inputs.append(input_var)
 
-        name = "_QUANT_PATTERN_PASS"
-        super().__init__(graph, _quant_pattern_fun, name)
+        name = "_QUANT_PATTERN_FLOOR_PASS"
+        super().__init__(graph, _quant_pattern_floor_fun, name)
 
 
 def _recognize_dequant_fun(graph: gs.Graph, match: Match, name: str):
@@ -1177,3 +1187,63 @@ class DequantPatternPass(ReplaceSequentialPatternPass):
 
         name = "_RECOGNIZE_DEQUANT_PASS"
         super().__init__(graph, _recognize_dequant_fun, name)
+
+def _merge_floor_clip_fun(graph: gs.Graph, match: Match, name: str):
+    matched_nodes = [m for k, m in match.nodes_map.items()]
+
+    floor_node = matched_nodes[0]
+    clip_node = matched_nodes[1]
+
+    # Get input tensor from Floor node
+    input_tensor = floor_node.inputs[0]
+    # Get output tensor from Clip node
+    output_tensor = clip_node.outputs[0]
+
+    # Extract min and max values from Clip node
+    min_input = clip_node.inputs[1] if len(clip_node.inputs) > 1 else None
+    max_input = clip_node.inputs[2] if len(clip_node.inputs) > 2 else None
+
+    min_value = float(min_input.values.item()) if (min_input is not None and hasattr(min_input, 'values')) else -128
+    max_value = float(max_input.values.item()) if (max_input is not None and hasattr(max_input, 'values')) else 127
+
+    # Create FloorClip attributes
+    floor_clip_attrs = {
+        'min_val': np.array([min_value], dtype=np.float32),
+        'max_val': np.array([max_value], dtype=np.float32),
+    }
+
+    # Create the new FloorClip node
+    floor_clip_node = gs.Node(op='FloorClip',
+                             name=name + '_FloorClip',
+                             inputs=[input_tensor],
+                             outputs=[output_tensor],
+                             attrs=floor_clip_attrs)
+
+    # Add the new node to the graph
+    graph.nodes.append(floor_clip_node)
+
+    # Remove the old nodes
+    for node in matched_nodes:
+        node.inputs.clear()
+        node.outputs.clear()
+        graph.nodes.remove(node)
+
+    return graph
+
+
+@contextagnostic
+class FloorClipPatternPass(ReplaceSequentialPatternPass):
+
+    def __init__(self):
+        graph = gs.Graph()
+        input_var = gs.Variable(name='input_0')
+
+        # Create the pattern: Floor -> Clip
+        floor_out = graph.layer(inputs=[input_var], outputs=['floor_out'], op='Floor', name='floor')
+        clip_out = graph.layer(inputs=floor_out, outputs=['clip_out'], op='Clip', name='clip')
+
+        graph.outputs.append(clip_out)
+        graph.inputs.append(input_var)
+
+        name = "_FLOOR_CLIP_PATTERN_PASS"
+        super().__init__(graph, _merge_floor_clip_fun, name)
