@@ -1188,6 +1188,7 @@ class DequantPatternPass(ReplaceSequentialPatternPass):
         name = "_RECOGNIZE_DEQUANT_PASS"
         super().__init__(graph, _recognize_dequant_fun, name)
 
+
 def _merge_floor_clip_fun(graph: gs.Graph, match: Match, name: str):
     matched_nodes = [m for k, m in match.nodes_map.items()]
 
@@ -1208,16 +1209,16 @@ def _merge_floor_clip_fun(graph: gs.Graph, match: Match, name: str):
 
     # Create FloorClip attributes
     floor_clip_attrs = {
-        'min_val': np.array([min_value], dtype=np.float32),
-        'max_val': np.array([max_value], dtype=np.float32),
+        'min_val': np.array([min_value], dtype = np.float32),
+        'max_val': np.array([max_value], dtype = np.float32),
     }
 
     # Create the new FloorClip node
-    floor_clip_node = gs.Node(op='FloorClip',
-                             name=name + '_FloorClip',
-                             inputs=[input_tensor],
-                             outputs=[output_tensor],
-                             attrs=floor_clip_attrs)
+    floor_clip_node = gs.Node(op = 'FloorClip',
+                              name = name + '_FloorClip',
+                              inputs = [input_tensor],
+                              outputs = [output_tensor],
+                              attrs = floor_clip_attrs)
 
     # Add the new node to the graph
     graph.nodes.append(floor_clip_node)
@@ -1236,11 +1237,11 @@ class FloorClipPatternPass(ReplaceSequentialPatternPass):
 
     def __init__(self):
         graph = gs.Graph()
-        input_var = gs.Variable(name='input_0')
+        input_var = gs.Variable(name = 'input_0')
 
         # Create the pattern: Floor -> Clip
-        floor_out = graph.layer(inputs=[input_var], outputs=['floor_out'], op='Floor', name='floor')
-        clip_out = graph.layer(inputs=floor_out, outputs=['clip_out'], op='Clip', name='clip')
+        floor_out = graph.layer(inputs = [input_var], outputs = ['floor_out'], op = 'Floor', name = 'floor')
+        clip_out = graph.layer(inputs = floor_out, outputs = ['clip_out'], op = 'Clip', name = 'clip')
 
         graph.outputs.append(clip_out)
         graph.inputs.append(input_var)

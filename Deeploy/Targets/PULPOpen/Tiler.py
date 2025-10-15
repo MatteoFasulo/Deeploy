@@ -15,14 +15,15 @@ from Deeploy.Targets.Generic.TileConstraints.RQSiHardswishTileConstraint import 
 from Deeploy.Targets.Generic.TileConstraints.TransposeTileConstraint import TransposeTileConstraint
 from Deeploy.Targets.Generic.TileConstraints.UnaryTileConstraint import UnaryTileConstraint
 from Deeploy.Targets.Generic.TileConstraints.UntiledTileConstraint import UntiledTileConstraint
-from Deeploy.Targets.PULPOpen.Bindings import PULPAddBindings, PULPConcatBindings, PULPFloatConv2DBindings, \
-    PULPFloatGELUBinding, PULPFloatGEMMBindings, PULPGatherBindings, PULPiHardswishBindings, PULPiRMSNormBindings, \
-    PULPiRQSGELUBindings, PULPLayernormBinding, PULPMatMulBindings, PULPMaxPool2DBindings, PULPMulBindings, \
-    PULPQuantConv2DBindings, PULPQuantizedGEMMBindings, PULPReduceSumBindings, PULPReluBinding, PULPReshapeBindings, \
-    PULPRQAddBindings, PULPRQSBindings, PULPRQSConv2DBindings, PULPRQSDWConv2DBindings, PULPRQSGEMMBindings, \
-    PULPRQSiHardswishBindings, PULPRQSMatrixVecBindings, PULPRQSTallGEMMBindings, PULPSGDBindings, \
-    PULPSoftmaxBindings, PULPSoftmaxCrossEntropyLossBindings, PULPSoftmaxCrossEntropyLossGradBindings, \
-    PULPSoftmaxGradBindings, PULPTransposeBindings, PULPUniformRQSBindings
+from Deeploy.Targets.PULPOpen.Bindings import PULPAddBindings, PULPConcatBindings, PULPDequantBindings, \
+    PULPFloatConv2DBindings, PULPFloatGELUBinding, PULPFloatGEMMBindings, PULPGatherBindings, PULPiHardswishBindings, \
+    PULPiRMSNormBindings, PULPiRQSGELUBindings, PULPLayernormBinding, PULPMatMulBindings, PULPMaxPool2DBindings, \
+    PULPMulBindings, PULPQuantBindings, PULPQuantConv2DBindings, PULPQuantizedGEMMBindings, PULPReduceMeanBindings, \
+    PULPReduceSumBindings, PULPReluBinding, PULPReshapeBindings, PULPRQAddBindings, PULPRQSBindings, \
+    PULPRQSConv2DBindings, PULPRQSDWConv2DBindings, PULPRQSGEMMBindings, PULPRQSiHardswishBindings, \
+    PULPRQSMatrixVecBindings, PULPRQSTallGEMMBindings, PULPSGDBindings, PULPSoftmaxBindings, \
+    PULPSoftmaxCrossEntropyLossBindings, PULPSoftmaxCrossEntropyLossGradBindings, PULPSoftmaxGradBindings, \
+    PULPTransposeBindings, PULPUniformRQSBindings
 from Deeploy.Targets.PULPOpen.TileConstraints.ConvTileConstraint import Conv2DTileConstraint, RQConv2DTileConstraint
 from Deeploy.Targets.PULPOpen.TileConstraints.DWConvTileConstraint import DWConv2DTileConstraint
 from Deeploy.Targets.PULPOpen.TileConstraints.GatherTileConstraint import GatherTileConstraint
@@ -48,11 +49,23 @@ PULPConv2DTilingReadyBindings = TilingReadyNodeBindings(nodeBindings = PULPFloat
 
 # MFASULO: Quant2D Conv with bias
 PULPQuantConv2DTilingReadyBindings = TilingReadyNodeBindings(nodeBindings = PULPQuantConv2DBindings,
-                                                        tileConstraint = Conv2DTileConstraint())
+                                                             tileConstraint = Conv2DTileConstraint())
 
 # MFASULO: Quantized GEMM
 PULPQuantizedGEMMTilingReadyBindings = TilingReadyNodeBindings(nodeBindings = PULPQuantizedGEMMBindings,
-                                                        tileConstraint = FloatGEMMTileConstraint())
+                                                               tileConstraint = FloatGEMMTileConstraint())
+
+# MFASULO: Quant/Dequant bindings with unary tile constraint
+PULPQuantTilingReadyBindings = TilingReadyNodeBindings(nodeBindings = PULPQuantBindings,
+                                                       tileConstraint = UnaryTileConstraint())
+
+# MFASULO: Quant/Dequant bindings with unary tile constraint
+PULPDequantTilingReadyBindings = TilingReadyNodeBindings(nodeBindings = PULPDequantBindings,
+                                                         tileConstraint = UnaryTileConstraint())
+
+# MFASULO: ReduceMean with Untiled constraint
+PULPReduceMeanTilingReadyBindings = TilingReadyNodeBindings(nodeBindings = PULPReduceMeanBindings,
+                                                            tileConstraint = UntiledTileConstraint())
 
 PULPRQSGEMMTilingReadyBindings = TilingReadyNodeBindings(nodeBindings = PULPRQSGEMMBindings,
                                                          tileConstraint = GEMMTileConstraint())

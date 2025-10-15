@@ -26,19 +26,19 @@ from Deeploy.Targets.Generic.Templates import AllocateTemplate as BasicAllocateT
 from Deeploy.Targets.Generic.TopologyOptimizationPasses.Passes import DequantPatternPass, IntegerDivRequantMergePass, \
     MergeConstAddAndRequantPass, MergeTrueIntegerDivRequantShiftPass, QuantPatternPass, RQSSplitPass, \
     SkipEmptyConcatPass, SkipUnityRequantPass, iGELURequantMergePass, iHardswishRequantMergePass
-from Deeploy.Targets.PULPOpen.Bindings import BasicDequantBindings, BasicQuantBindings, PULPConv1DBinding, \
-    PULPDMASliceBindings, PULPDWConv1DBinding, PULPReduceMeanBindings
+from Deeploy.Targets.PULPOpen.Bindings import PULPConv1DBinding, PULPDMASliceBindings, PULPDWConv1DBinding
 from Deeploy.Targets.PULPOpen.Layers import PULPRQSConvLayer, PULPRQSGEMMLayer
 from Deeploy.Targets.PULPOpen.Parsers import PULPConv1DParser, PULPConv2DParser, PULPDWConv1DParser, \
     PULPDWConv2DParser, PULPFPConv2DParser, PULPGEMMParser, PULPMatrixVecParser, PULPQuantConv2DParser, \
     PULPTallGEMMParser
 from Deeploy.Targets.PULPOpen.Templates import AllocateTemplate, FreeTemplate
 from Deeploy.Targets.PULPOpen.Tiler import PULPAddTilingReadyBindings, PULPConcatTilingReadyBindings, \
-    PULPConv2DTilingReadyBindings, PULPFlattenTilingReadyBindings, PULPFPGELUTilingReadyBindings, \
-    PULPFPGEMMTilingReadyBindings, PULPGatherTilingReadyBindings, PULPiHardswishTilingReadyBindings, \
-    PULPiRMSNormTilingReadyBindings, PULPiRQSGELUTilingReadyBindings, PULPLayernormTilingReadyBindings, \
-    PULPMatMulTilingReadyBindings, PULPMaxPool2DTilingReadyBindings, PULPMulTilingReadyBindings, \
-    PULPQuantConv2DTilingReadyBindings, PULPQuantizedGEMMTilingReadyBindings, PULPReduceSumTilingReadyBindings, \
+    PULPConv2DTilingReadyBindings, PULPDequantTilingReadyBindings, PULPFlattenTilingReadyBindings, \
+    PULPFPGELUTilingReadyBindings, PULPFPGEMMTilingReadyBindings, PULPGatherTilingReadyBindings, \
+    PULPiHardswishTilingReadyBindings, PULPiRMSNormTilingReadyBindings, PULPiRQSGELUTilingReadyBindings, \
+    PULPLayernormTilingReadyBindings, PULPMatMulTilingReadyBindings, PULPMaxPool2DTilingReadyBindings, \
+    PULPMulTilingReadyBindings, PULPQuantConv2DTilingReadyBindings, PULPQuantizedGEMMTilingReadyBindings, \
+    PULPQuantTilingReadyBindings, PULPReduceMeanTilingReadyBindings, PULPReduceSumTilingReadyBindings, \
     PULPReluTilingReadyBindings, PULPRQAddTilingReadyBindings, PULPRQSConv2DTilingReadyBindings, \
     PULPRQSDWConv2DTilingReadyBindings, PULPRQSGEMMTilingReadyBindings, PULPRQSiHardswishTilingReadyBindings, \
     PULPRQSMatrixVecTilingReadyBindings, PULPRQSTallGEMMTilingReadyBindings, PULPRQSTilingReadyBindings, \
@@ -63,7 +63,7 @@ UnsqueezeMapper = NodeMapper(UnsqueezeParser(), PULPFlattenTilingReadyBindings)
 RequantShiftMapper = NodeMapper(RequantShiftParser(), PULPRQSTilingReadyBindings)
 UniformRequantShiftMapper = NodeMapper(UniformRequantShiftParser(), PULPUniformRQSTilingReadyBindings)
 
-ReduceMeanMapper = NodeMapper(ReduceMeanParser(), PULPReduceMeanBindings)
+ReduceMeanMapper = NodeMapper(ReduceMeanParser(), PULPReduceMeanTilingReadyBindings)
 ReduceSumMapper = NodeMapper(ReduceSumParser(), PULPReduceSumTilingReadyBindings)
 MatMulMapper = NodeMapper(MatMulParser(), PULPMatMulTilingReadyBindings)
 RQIntegerDivMapper = NodeMapper(RQIntegerDivParser(), [BasicRQIntegerDivBinding])
@@ -97,8 +97,8 @@ SoftmaxCrossEntropyLossMapper = NodeMapper(SoftmaxCrossEntropyLossParser(), PULP
 SoftmaxCrossEntropyLossGradMapper = NodeMapper(SoftmaxCrossEntropyLossGradParser(),
                                                PULPSoftmaxCrossEntropyGradTilingReadyBindings)
 SGDMapper = NodeMapper(SGDParser(), PULPSGDTilingReadyBindings)
-QuantMapper = NodeMapper(QuantParser(), BasicQuantBindings)
-DequantMapper = NodeMapper(DequantParser(), BasicDequantBindings)
+QuantMapper = NodeMapper(QuantParser(), PULPQuantTilingReadyBindings)
+DequantMapper = NodeMapper(DequantParser(), PULPDequantTilingReadyBindings)
 GEMMDequantMapper = NodeMapper(PULPGEMMParser(), BasicGEMMBindings)
 QuantConv2DMapper = NodeMapper(PULPQuantConv2DParser(), PULPQuantConv2DTilingReadyBindings)
 QuantizedGEMMMapper = NodeMapper(GEMMParser(), PULPQuantizedGEMMTilingReadyBindings)
@@ -106,6 +106,8 @@ PULPMapping = {
     'Conv': ConvLayer([FPConv2DMapper, QuantConv2DMapper]),
     'RequantizedConv': PULPRQSConvLayer([Conv2DMapper, DWConv2DMapper, Conv1DMapper, DWConv1DMapper]),
     'RequantizedGemm': PULPRQSGEMMLayer([MatrixVecMapper, TallGEMMMapper, GEMMMapper]),
+    # MFASULO: Quantized GEMM must be before FloatGEMMMapper
+    # However, in this way, all CCT experiments are failing
     'Gemm': GEMMLayer([QuantizedGEMMMapper, FloatGEMMMapper, GEMMDequantMapper]),
     'Gelu': GELULayer([GELUMapper]),
     'LayerNormalization': LayerNormLayer([LayerNormMapper]),

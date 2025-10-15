@@ -218,6 +218,13 @@ PULPFloatGEMMBindings = [
         ForkTransformer)
 ]
 
+# MFASULO: Quantized GEMM
+PULPQuantizedGEMMBindings = [
+    NodeBinding(
+        GEMMChecker([PointerClass(int8_t), PointerClass(int8_t),
+                     PointerClass(int32_t)], [PointerClass(int32_t)]), GemmTemplate.referenceTemplate, ForkTransformer)
+]
+
 PULPFloatConv2DBindings = [
     NodeBinding(
         ConvChecker([PointerClass(float32_t), PointerClass(float32_t),
@@ -285,15 +292,8 @@ PULPReduceMeanBindings = [
     NodeBinding(ReduceMeanChecker([PointerClass(type)], [PointerClass(type)]), ReduceMeanTemplate.referenceTemplate,
                 ClusterTransformer) for type in IntegerDataTypes
 ] + [
-    NodeBinding(ReduceMeanChecker([PointerClass(type)], [PointerClass(type)]), FloatReduceMeanTemplate.referenceTemplate,
-                ClusterTransformer) for type in FloatDataTypes
-]
-
-# MFASULO: Quantized GEMM
-PULPQuantizedGEMMBindings = [
-    NodeBinding(
-        GEMMChecker([PointerClass(int8_t), PointerClass(int8_t),
-                     PointerClass(int32_t)], [PointerClass(int32_t)]), GemmTemplate.referenceTemplate, ForkTransformer)
+    NodeBinding(ReduceMeanChecker([PointerClass(type)], [PointerClass(type)]),
+                FloatReduceMeanTemplate.referenceTemplate, ForkTransformer) for type in FloatDataTypes
 ]
 
 PULPReduceSumBindings = [
@@ -417,12 +417,12 @@ PULPGatherBindings = [
                 GatherTemplate.referenceTemplate, ForkTransformer) for type in IntegerDataTypes
 ]
 
-BasicQuantBindings = [
+PULPQuantBindings = [
     NodeBinding(QuantChecker([PointerClass(float32_t)], [PointerClass(int8_t)]), QuantTemplate.referenceTemplate,
                 ForkTransformer),
 ]
 
-BasicDequantBindings = [
+PULPDequantBindings = [
     NodeBinding(DequantChecker([PointerClass(int8_t)], [PointerClass(float32_t)]), DequantTemplate.referenceTemplate,
                 ForkTransformer),
 ] + [

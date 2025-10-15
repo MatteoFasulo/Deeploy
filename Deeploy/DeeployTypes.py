@@ -801,11 +801,18 @@ class NetworkContext():
             name = self._mangle(_id + "_" + name, False)
 
         if name in self.localObjects.keys():
-            return self.localObjects[name]
+            obj = self.localObjects[name]
         elif name in self.globalObjects.keys():
-            return self.globalObjects[name]
+            obj = self.globalObjects[name]
         else:
             raise KeyError(f'Expected key {name} to be in either local or global context!')
+
+        # MFASULO: ensure shapes are iterable (fix ONNX bias int shape)
+        if hasattr(obj, 'shape'):
+            if isinstance(obj.shape, int):
+                obj.shape = (obj.shape,)
+
+        return obj
 
     def is_global(self, name: str) -> bool:
         """Checks whether a name is associated with a global buffer

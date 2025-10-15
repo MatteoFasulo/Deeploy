@@ -231,13 +231,17 @@ class Conv2DTileConstraint(TileConstraint):
         inputBufferName = parseDict['data_in']
         weightBufferName = parseDict['weight']
         outputBufferName = parseDict['data_out']
+        biasBufferName = parseDict['bias']
 
         strides = parseDict["strides"]
         padding = parseDict["pads"]
         dilation = parseDict["dilations"]
 
         # Add I/O dimensions to the model as variables
-        for bufferName in [inputBufferName, weightBufferName, outputBufferName]:
+        bufferNames = [inputBufferName, weightBufferName, outputBufferName]
+        if biasBufferName != 'NULL':  # MFASULO: weak check if string changes
+            bufferNames.append(biasBufferName)
+        for bufferName in bufferNames:
             tilerModel.addTensorDimToModel(ctxt, bufferName)
 
         inputBatchVar = tilerModel.getTensorDimVar(tensorName = inputBufferName, dimIdx = 0)
@@ -254,6 +258,10 @@ class Conv2DTileConstraint(TileConstraint):
         outputHeightVar = tilerModel.getTensorDimVar(tensorName = outputBufferName, dimIdx = 1)
         outputWidthVar = tilerModel.getTensorDimVar(tensorName = outputBufferName, dimIdx = 2)
         outputChannelVar = tilerModel.getTensorDimVar(tensorName = outputBufferName, dimIdx = 3)
+
+        if biasBufferName != 'NULL':  # MFASULO: weak check if string changes
+            biasVar = tilerModel.getTensorDimVar(tensorName = biasBufferName, dimIdx = 0)
+            tilerModel.addConstraint(biasVar == outputChannelVar)
 
         # Map output dims to inputs dims
         tilerModel.addConstraint(outputBatchVar == inputBatchVar)  # Batch
@@ -354,6 +362,8 @@ class Conv2DTileConstraint(TileConstraint):
         outputCubes = [cube.rectangle for cube in absoluteOutputCubes]
 
         addrNames = ['data_in', 'weight', 'data_out']
+        if 'bias' in operatorRepresentation:
+            addrNames.append('bias')
         inputBaseOffsets, outputBaseOffsets = cls.extractBaseAddr(tilingSolution, targetMemLevel,
                                                                   operatorRepresentation, addrNames)
 
@@ -362,6 +372,7 @@ class Conv2DTileConstraint(TileConstraint):
 
         inputInCubes = []
         inputWeightCubes = []
+        inputBiasCubes = []
         replacements: Dict[str, List[int]] = {
             "dim_im_in_x": [],
             "dim_im_in_y": [],
@@ -420,11 +431,19 @@ class Conv2DTileConstraint(TileConstraint):
 
             inputWeightCubes.append(WeightCube)
 
+            if 'bias' in operatorRepresentation:
+                bias_tensor = ctxt.lookup(name = operatorRepresentation['bias'])
+                BiasCube = HyperRectangle((COffset,), (CSize,))
+                inputBiasCubes.append(BiasCube)
+
         inputLoadSchedule = []
         outputLoadSchedule = []
 
-        for a, b in zip(inputInCubes, inputWeightCubes):
-            inputLoadSchedule.append({"data_in": a, "weight": b})
+        for a, b, bias in zip(inputInCubes, inputWeightCubes, inputBiasCubes):
+            step = {"data_in": a, "weight": b}
+            if bias is not None:
+                step["bias"] = bias
+            inputLoadSchedule.append(step)
 
         for out in outputCubes:
             outputLoadSchedule.append({"data_out": out})
