@@ -29,10 +29,10 @@ from Deeploy.Targets.PULPOpen.DMA.L3Dma import l3DmaHack
 from Deeploy.Targets.PULPOpen.DMA.MchanDma import MchanDma
 from Deeploy.Targets.PULPOpen.Templates import ConvTemplate, FloatAddTemplate, FloatConvTemplate, FloatGELUTemplate, \
     FloatGemmTemplate, FloatLayernormTemplate, FloatMatMulTemplate, FloatMaxPoolTemplate, FloatMulTemplate, \
-    FloatReluTemplate, FloatSoftmaxTemplate, GEMMTemplate, MatrixVectorTemplate, MaxPool2DTemplate, MulTemplate, \
-    ReduceMeanTemplate, RequantShiftTemplate, ReshapeTemplate, RQAddTemplate, RQSiHardswishTemplate, SGDTemplate, \
-    SliceTemplate, SoftmaxCrossEntropyLossTemplate, TallGEMMTemplate, TransposeTemplate, UniformRequantShiftTemplate, \
-    iRMSNormTemplate, iSoftmaxTemplate
+    FloatReluTemplate, FloatSoftmaxTemplate, GEMMTemplate, IntConvTemplate, MatrixVectorTemplate, MaxPool2DTemplate, \
+    MulTemplate, ReduceMeanTemplate, RequantShiftTemplate, ReshapeTemplate, RQAddTemplate, RQSiHardswishTemplate, \
+    SGDTemplate, SliceTemplate, SoftmaxCrossEntropyLossTemplate, TallGEMMTemplate, TransposeTemplate, \
+    UniformRequantShiftTemplate, iRMSNormTemplate, iSoftmaxTemplate
 from Deeploy.Targets.PULPOpen.TypeCheckers import PULPConvChecker, PULPLinearChecker, PULPMaxPoolChecker, \
     PULPRequantShiftChecker
 from Deeploy.TilingExtension.CodeTransformationPasses.TilingVariableReplacement import TilingVariableReplacement, \
@@ -222,6 +222,13 @@ PULPFloatConv2DBindings = [
     NodeBinding(
         ConvChecker([PointerClass(float32_t), PointerClass(float32_t),
                      PointerClass(float32_t)], [PointerClass(float32_t)]), FloatConvTemplate.reference2DIm2ColTemplate,
+        ForkTransformer)
+]
+
+PULPQuantConv2DBindings = [
+    NodeBinding(
+        ConvChecker([PointerClass(int8_t), PointerClass(int8_t),
+                     PointerClass(int32_t)], [PointerClass(int32_t)]), IntConvTemplate.reference2DTemplate,
         ForkTransformer)
 ]
 

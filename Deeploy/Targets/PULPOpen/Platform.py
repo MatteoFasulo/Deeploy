@@ -30,19 +30,21 @@ from Deeploy.Targets.PULPOpen.Bindings import BasicDequantBindings, BasicQuantBi
     PULPDMASliceBindings, PULPDWConv1DBinding, PULPReduceMeanBindings
 from Deeploy.Targets.PULPOpen.Layers import PULPRQSConvLayer, PULPRQSGEMMLayer
 from Deeploy.Targets.PULPOpen.Parsers import PULPConv1DParser, PULPConv2DParser, PULPDWConv1DParser, \
-    PULPDWConv2DParser, PULPFPConv2DParser, PULPGEMMParser, PULPMatrixVecParser, PULPTallGEMMParser
+    PULPDWConv2DParser, PULPFPConv2DParser, PULPGEMMParser, PULPMatrixVecParser, PULPQuantConv2DParser, \
+    PULPTallGEMMParser
 from Deeploy.Targets.PULPOpen.Templates import AllocateTemplate, FreeTemplate
 from Deeploy.Targets.PULPOpen.Tiler import PULPAddTilingReadyBindings, PULPConcatTilingReadyBindings, \
     PULPConv2DTilingReadyBindings, PULPFlattenTilingReadyBindings, PULPFPGELUTilingReadyBindings, \
     PULPFPGEMMTilingReadyBindings, PULPGatherTilingReadyBindings, PULPiHardswishTilingReadyBindings, \
     PULPiRMSNormTilingReadyBindings, PULPiRQSGELUTilingReadyBindings, PULPLayernormTilingReadyBindings, \
     PULPMatMulTilingReadyBindings, PULPMaxPool2DTilingReadyBindings, PULPMulTilingReadyBindings, \
-    PULPReduceSumTilingReadyBindings, PULPReluTilingReadyBindings, PULPRQAddTilingReadyBindings, \
-    PULPRQSConv2DTilingReadyBindings, PULPRQSDWConv2DTilingReadyBindings, PULPRQSGEMMTilingReadyBindings, \
-    PULPRQSiHardswishTilingReadyBindings, PULPRQSMatrixVecTilingReadyBindings, PULPRQSTallGEMMTilingReadyBindings, \
-    PULPRQSTilingReadyBindings, PULPSGDTilingReadyBindings, PULPSoftmaxCrossEntropyGradTilingReadyBindings, \
-    PULPSoftmaxCrossEntropyTilingReadyBindings, PULPSoftmaxGradTilingReadyBindings, PULPSoftmaxTilingReadyBindings, \
-    PULPTransposeTilingReadyBindings, PULPUniformRQSTilingReadyBindings
+    PULPQuantConv2DTilingReadyBindings, PULPReduceSumTilingReadyBindings, PULPReluTilingReadyBindings, \
+    PULPRQAddTilingReadyBindings, PULPRQSConv2DTilingReadyBindings, PULPRQSDWConv2DTilingReadyBindings, \
+    PULPRQSGEMMTilingReadyBindings, PULPRQSiHardswishTilingReadyBindings, PULPRQSMatrixVecTilingReadyBindings, \
+    PULPRQSTallGEMMTilingReadyBindings, PULPRQSTilingReadyBindings, PULPSGDTilingReadyBindings, \
+    PULPSoftmaxCrossEntropyGradTilingReadyBindings, PULPSoftmaxCrossEntropyTilingReadyBindings, \
+    PULPSoftmaxGradTilingReadyBindings, PULPSoftmaxTilingReadyBindings, PULPTransposeTilingReadyBindings, \
+    PULPUniformRQSTilingReadyBindings
 from Deeploy.Targets.PULPOpen.TopologyOptimizationPasses.Passes import PULPAddRequantMergePass, \
     PULPConvRequantMergePass, PULPGEMMRequantMergePass, PULPMatMulRequantMergePass
 
@@ -98,8 +100,9 @@ SGDMapper = NodeMapper(SGDParser(), PULPSGDTilingReadyBindings)
 QuantMapper = NodeMapper(QuantParser(), BasicQuantBindings)
 DequantMapper = NodeMapper(DequantParser(), BasicDequantBindings)
 GEMMDequantMapper = NodeMapper(PULPGEMMParser(), BasicGEMMBindings)
+QuantConv2DMapper = NodeMapper(PULPQuantConv2DParser(), PULPQuantConv2DTilingReadyBindings)
 PULPMapping = {
-    'Conv': ConvLayer([FPConv2DMapper]),
+    'Conv': ConvLayer([FPConv2DMapper, QuantConv2DMapper]),
     'RequantizedConv': PULPRQSConvLayer([Conv2DMapper, DWConv2DMapper, Conv1DMapper, DWConv1DMapper]),
     'RequantizedGemm': PULPRQSGEMMLayer([MatrixVecMapper, TallGEMMMapper, GEMMMapper]),
     'Gemm': GEMMLayer([FloatGEMMMapper, GEMMDequantMapper]),
