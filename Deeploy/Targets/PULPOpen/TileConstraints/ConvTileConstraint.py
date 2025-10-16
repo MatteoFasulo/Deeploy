@@ -236,8 +236,14 @@ class Conv2DTileConstraint(TileConstraint):
         padding = parseDict["pads"]
         dilation = parseDict["dilations"]
 
+        # MFASULO: check if bias is present and not NULL
+        # TODO: weak check if 'NULL' changes in the future
+        hasBias = 'bias' in parseDict and parseDict['bias'] != 'NULL'
+
         # Add I/O dimensions to the model as variables
         bufferNames = [inputBufferName, weightBufferName, outputBufferName]
+        if hasBias:
+            bufferNames.append(parseDict['bias'])
         for bufferName in bufferNames:
             tilerModel.addTensorDimToModel(ctxt, bufferName)
 
@@ -352,10 +358,14 @@ class Conv2DTileConstraint(TileConstraint):
             cls, tilingSolution: NodeMemoryConstraint, absoluteOutputCubes: List[AbsoluteHyperRectangle],
             targetMemLevel: str, ctxt: NetworkContext,
             operatorRepresentation: OperatorRepresentation) -> Tuple[VariableReplacementScheme, TilingSchedule]:
+        
+        # MFASULO: check if bias is present and not NULL
+        # TODO: weak check if 'NULL' changes in the future
+        hasBias = 'bias' in operatorRepresentation and operatorRepresentation['bias'] != 'NULL'
         outputCubes = [cube.rectangle for cube in absoluteOutputCubes]
 
         addrNames = ['data_in', 'weight', 'data_out']
-        if 'bias' in operatorRepresentation:
+        if hasBias:
             addrNames.append('bias')
         inputBaseOffsets, outputBaseOffsets = cls.extractBaseAddr(tilingSolution, targetMemLevel,
                                                                   operatorRepresentation, addrNames)
@@ -365,6 +375,7 @@ class Conv2DTileConstraint(TileConstraint):
 
         inputInCubes = []
         inputWeightCubes = []
+        inputBiasCubes = []
         replacements: Dict[str, List[int]] = {
             "dim_im_in_x": [],
             "dim_im_in_y": [],
@@ -423,11 +434,20 @@ class Conv2DTileConstraint(TileConstraint):
 
             inputWeightCubes.append(WeightCube)
 
+            if hasBias: 
+                BiasCube = HyperRectangle((COffset,), (CSize,))
+                inputBiasCubes.append(BiasCube)
+
         inputLoadSchedule = []
         outputLoadSchedule = []
 
-        for a, b in zip(inputInCubes, inputWeightCubes):
+        # MFASULO: HACK to handle optional bias
+        # if no bias, inputBiasCubes is empty and zip stops at the shortest list thus producing wrong results
+        # instead, we iterate over the range of inputInCubes and access inputBiasCubes only if it is not empty
+        for i, (a, b) in enumerate(zip(inputInCubes, inputWeightCubes)):
             step = {"data_in": a, "weight": b}
+            if inputBiasCubes:
+                step["bias"] = inputBiasCubes[i]
             inputLoadSchedule.append(step)
 
         for out in outputCubes:
