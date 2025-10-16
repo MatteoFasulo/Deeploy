@@ -71,7 +71,7 @@ ${data_out}_accumulator += ((${data_in_type.referencedType.typeName} (*)${shapeS
 }
 % endfor
 % if keepdims:
-*dummy_${data_out}++ = (${data_out_type.referencedType.typeName}) ((${data_out}_accumulator / ${reduceLength} + ${output_offset});
+*dummy_${data_out}++ = (${data_out_type.referencedType.typeName}) (${data_out}_accumulator / ${reduceLength} + ${output_offset});
 % else:
 *dummy_${data_out}++ = (${data_out_type.referencedType.typeName}) (${data_out}_accumulator / ${reduceLength});
 % endif

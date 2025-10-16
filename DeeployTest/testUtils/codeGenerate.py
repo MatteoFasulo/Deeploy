@@ -223,20 +223,22 @@ def generateL3HexDump(deployer: NetworkDeployer, path: str, test_inputs: List, t
         return retStr, width
 
     def dumpBuffer(buf: VariableBuffer, path: str):
-
-        if "input" in buf.name:
-            idx = int(buf.name.split("_")[1])
-            array = _shapeBroadcast(deployer.ctxt, test_inputs[idx], f"input_{idx}")
-
-        elif "output" in buf.name:
-            _list = buf.name.split("_")
-            idx = int(_list[1])
-            array = _shapeBroadcast(deployer.ctxt, test_outputs[idx], f"output_{idx}")
-
-        elif isinstance(buf, ConstantBuffer):
+        # MFASULO: moved ConstantBuffer check here to avoid buffers having 'input' or 'output' in their name to be confused with VariableBuffers
+        if isinstance(buf, ConstantBuffer):
             array = buf.values
+
         else:
-            raise Exception(f"Unexpected buffer {buf}!")
+            if "input" in buf.name:
+                idx = int(buf.name.split("_")[1])
+                array = _shapeBroadcast(deployer.ctxt, test_inputs[idx], f"input_{idx}")
+
+            elif "output" in buf.name:
+                _list = buf.name.split("_")
+                idx = int(_list[1])
+                array = _shapeBroadcast(deployer.ctxt, test_outputs[idx], f"output_{idx}")
+
+            else:
+                raise Exception(f"Unexpected buffer {buf}!")
 
         typeStr, width = type2TypeStr(buf._type)
 

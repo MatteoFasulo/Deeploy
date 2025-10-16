@@ -358,7 +358,7 @@ class Conv2DTileConstraint(TileConstraint):
             cls, tilingSolution: NodeMemoryConstraint, absoluteOutputCubes: List[AbsoluteHyperRectangle],
             targetMemLevel: str, ctxt: NetworkContext,
             operatorRepresentation: OperatorRepresentation) -> Tuple[VariableReplacementScheme, TilingSchedule]:
-        
+
         # MFASULO: check if bias is present and not NULL
         # TODO: weak check if 'NULL' changes in the future
         hasBias = 'bias' in operatorRepresentation and operatorRepresentation['bias'] != 'NULL'
@@ -434,7 +434,7 @@ class Conv2DTileConstraint(TileConstraint):
 
             inputWeightCubes.append(WeightCube)
 
-            if hasBias: 
+            if hasBias:
                 BiasCube = HyperRectangle((COffset,), (CSize,))
                 inputBiasCubes.append(BiasCube)
 
