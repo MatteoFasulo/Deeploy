@@ -103,7 +103,7 @@ GEMMDequantMapper = NodeMapper(PULPGEMMParser(), BasicGEMMBindings)
 QuantConv2DMapper = NodeMapper(PULPQuantConv2DParser(), PULPQuantConv2DTilingReadyBindings)
 QuantizedGEMMMapper = NodeMapper(GEMMParser(), PULPQuantizedGEMMTilingReadyBindings)
 PULPMapping = {
-    'Conv': ConvLayer([FPConv2DMapper, QuantConv2DMapper]),
+    'Conv': ConvLayer([QuantConv2DMapper, FPConv2DMapper]),
     'RequantizedConv': PULPRQSConvLayer([Conv2DMapper, DWConv2DMapper, Conv1DMapper, DWConv1DMapper]),
     'RequantizedGemm': PULPRQSGEMMLayer([MatrixVecMapper, TallGEMMMapper, GEMMMapper]),
     # MFASULO: Quantized GEMM must be before FloatGEMMMapper

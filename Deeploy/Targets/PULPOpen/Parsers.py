@@ -122,7 +122,7 @@ class PULPQuantConv2DParser(Conv2DParser):
                 self.operatorRepresentation['pads'][0] == self.operatorRepresentation['pads'][2],
                 self.operatorRepresentation['pads'][1] == self.operatorRepresentation['pads'][3],
                 self.operatorRepresentation['pads'][0] == self.operatorRepresentation['pads'][1],
-                len(node.inputs) == 3  # MFASULO: support for bias
+                len(node.inputs) in [2, 3]  # MFASULO: support for bias
             ])
 
             self.operatorRepresentation['dim_kernel_x'] = int(self.operatorRepresentation['kernel_shape'][0])
