@@ -1,0 +1,33 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.Targets.Generic.Templates.FloorTemplate.FloorTemplate
+=============================================================
+
+.. currentmodule:: Deeploy.Targets.Generic.Templates.FloorTemplate
+
+.. autoclass:: FloorTemplate
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~FloorTemplate.__init__
+      ~FloorTemplate.alignToContext
+      ~FloorTemplate.computeTransientBuffersSize
+      ~FloorTemplate.generate
+      ~FloorTemplate.hoistTransientBuffers
+      ~FloorTemplate.internalSize
+   
+   
+
+   
+   
+   

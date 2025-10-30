@@ -1,0 +1,33 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.Targets.Generic.Templates.ClipTemplate.ClipTemplate
+===========================================================
+
+.. currentmodule:: Deeploy.Targets.Generic.Templates.ClipTemplate
+
+.. autoclass:: ClipTemplate
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~ClipTemplate.__init__
+      ~ClipTemplate.alignToContext
+      ~ClipTemplate.computeTransientBuffersSize
+      ~ClipTemplate.generate
+      ~ClipTemplate.hoistTransientBuffers
+      ~ClipTemplate.internalSize
+   
+   
+
+   
+   
+   

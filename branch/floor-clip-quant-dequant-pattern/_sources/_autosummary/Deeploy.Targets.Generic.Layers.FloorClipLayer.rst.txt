@@ -1,0 +1,47 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.Targets.Generic.Layers.FloorClipLayer
+=============================================
+
+.. currentmodule:: Deeploy.Targets.Generic.Layers
+
+.. autoclass:: FloorClipLayer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~FloorClipLayer.__init__
+      ~FloorClipLayer.bind
+      ~FloorClipLayer.broadcast
+      ~FloorClipLayer.codeTransform
+      ~FloorClipLayer.computeOps
+      ~FloorClipLayer.computeShapes
+      ~FloorClipLayer.discardCurrentMapper
+      ~FloorClipLayer.generate
+      ~FloorClipLayer.parse
+      ~FloorClipLayer.resetDiscardedMappers
+      ~FloorClipLayer.typeCheck
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~FloorClipLayer.maps
+      ~FloorClipLayer.mapper
+      ~FloorClipLayer.discardedMappers
+      ~FloorClipLayer.node
+   
+   

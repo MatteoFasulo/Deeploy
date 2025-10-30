@@ -1,0 +1,41 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.Targets.Generic.TypeCheckers.FloorClipChecker
+=====================================================
+
+.. currentmodule:: Deeploy.Targets.Generic.TypeCheckers
+
+.. autoclass:: FloorClipChecker
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~FloorClipChecker.__init__
+      ~FloorClipChecker.annotateDict
+      ~FloorClipChecker.checkOutputType
+      ~FloorClipChecker.signature
+      ~FloorClipChecker.typeCheck
+      ~FloorClipChecker.typeCheckNodeInputs
+      ~FloorClipChecker.typeInferGlobalCtxt
+      ~FloorClipChecker.typeInferOutput
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~FloorClipChecker.typeDict
+   
+   
